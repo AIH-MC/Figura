@@ -3,9 +3,9 @@ package org.figuramc.figura.mixin.render.renderers;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -18,28 +18,19 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.scores.DisplaySlot;
-import net.minecraft.world.entity.EntityAttachment;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.Score;
-import net.minecraft.world.scores.Scoreboard;
 import org.figuramc.figura.FiguraMod;
 import org.figuramc.figura.avatar.Avatar;
 import org.figuramc.figura.avatar.AvatarManager;
 import org.figuramc.figura.avatar.Badges;
-import org.figuramc.figura.compat.SimpleVCCompat;
 import org.figuramc.figura.config.Configs;
 import org.figuramc.figura.ducks.EntityRendererAccessor;
-import org.figuramc.figura.ducks.FiguraEntityRenderStateExtension;
+import org.figuramc.figura.ducks.FiguraSubmitCallBackExtension;
 import org.figuramc.figura.ducks.NodeCollectorExtension;
-import org.figuramc.figura.lua.api.ClientAPI;
 import org.figuramc.figura.lua.api.nameplate.EntityNameplateCustomization;
 import org.figuramc.figura.lua.api.vanilla_model.VanillaPart;
 import org.figuramc.figura.permissions.Permissions;
 import org.figuramc.figura.utils.RenderUtils;
 import org.figuramc.figura.utils.TextUtils;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,7 +38,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 @Mixin(AvatarRenderer.class)
@@ -178,17 +170,33 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
     @Inject(at = @At(value = "INVOKE", shift = At.Shift.BEFORE, target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModelPart(Lnet/minecraft/client/model/geom/ModelPart;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V"), method = "renderHand")
     private void onRenderHand(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int i, ResourceLocation resourceLocation, ModelPart modelPart, boolean bl, CallbackInfo ci) {
         avatar = AvatarManager.getAvatarForPlayer(Minecraft.getInstance().player.getUUID());
-        if (avatar != null && avatar.luaRuntime != null) {
-            VanillaPart part = avatar.luaRuntime.vanilla_model.PLAYER;
-            PlayerModel model = this.getModel();
 
-            part.save(model);
 
-            if (avatar.permissions.get(Permissions.VANILLA_MODEL_EDIT) == 1) {
-                part.preTransform(model);
-                part.posTransform(model);
+        Avatar localAvatar = avatar;
+        BiFunction<MultiBufferSource, PoseStack, Boolean> lambda = (bufferSource, stack) -> {
+            float delta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+
+            if (localAvatar != null && localAvatar.luaRuntime != null) {
+                VanillaPart part = localAvatar.luaRuntime.vanilla_model.PLAYER;
+                PlayerModel model = this.getModel();
+
+                part.save(model);
+
+                if (localAvatar.permissions.get(Permissions.VANILLA_MODEL_EDIT) == 1) {
+                    part.preTransform(model);
+                    part.posTransform(model);
+                }
             }
-        }
+
+            return true;
+        };
+
+        ((FiguraSubmitCallBackExtension)(Object)modelPart).figura$addPreRenderingCallback(lambda);
+        ((FiguraSubmitCallBackExtension)(Object)modelPart).figura$addPostRenderingCallback(() -> {
+            if (localAvatar != null && localAvatar.luaRuntime != null)
+                localAvatar.luaRuntime.vanilla_model.PLAYER.restore(model);
+            }
+        );
     }
 
     @Inject(at = @At("RETURN"), method = "renderHand")
@@ -200,11 +208,31 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
 
         float delta = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
 
+        PoseStack copy = new PoseStack();
+        copy.pushPose(); // save the current stack
+        copy.last().set(stack.last());
+
         PlayerModel playerModel = getModel();
+
+        Map<ModelPart, PartPose> modelState = RenderUtils.captureModelState(playerModel);
 
         nodeCollectorExt.submitFiguraModel(avatar, null, (playerAvatar, state, bufferSource) -> {
 
-            playerAvatar.firstPersonRender(stack, bufferSource, Minecraft.getInstance().player, playerModel, arm, light, delta);
+            RenderUtils.restoreModelPoseState(playerModel, modelState);
+
+            if (playerAvatar != null && playerAvatar.luaRuntime != null) {
+                VanillaPart part = playerAvatar.luaRuntime.vanilla_model.PLAYER;
+                PlayerModel model = this.getModel();
+
+                part.save(model);
+
+                if (playerAvatar.permissions.get(Permissions.VANILLA_MODEL_EDIT) == 1) {
+                    part.preTransform(model);
+                    part.posTransform(model);
+                }
+            }
+
+            playerAvatar.firstPersonRender(copy, bufferSource, Minecraft.getInstance().player, playerModel, arm, light, delta);
 
             if (playerAvatar.luaRuntime != null)
                 playerAvatar.luaRuntime.vanilla_model.PLAYER.restore(playerModel);

@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.util.Mth;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -45,6 +46,10 @@ public class LevelRendererMixinFabric {
     @Final
     private SubmitNodeStorage submitNodeStorage;
 
+    @Shadow
+    @Final
+    private FeatureRenderDispatcher featureRenderDispatcher;
+
     @Inject(method = {"method_62214"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;checkPoseStack(Lcom/mojang/blaze3d/vertex/PoseStack;)V", ordinal = 0))
     private void renderLevelFirstPerson(GpuBufferSlice gpuBufferSlice, LevelRenderState levelRenderState, ProfilerFiller profiler,
                                         Matrix4f matrix4f, ResourceHandle resourceHandle, ResourceHandle resourceHandle2, boolean bl,
@@ -66,38 +71,36 @@ public class LevelRendererMixinFabric {
         EntityRenderer<LivingEntity, LivingEntityRenderState> entityRenderer = (EntityRenderer<LivingEntity, LivingEntityRenderState>) this.entityRenderDispatcher.getRenderer(livingEntity);
 
         LivingEntityRenderState state = entityRenderer.createRenderState(livingEntity, deltaTracker.getGameTimeDeltaPartialTick(Minecraft.getInstance().level.tickRateManager().isEntityFrozen(e)));
+
         // first person world parts
         MultiBufferSource.BufferSource bufferSource = this.renderBuffers.bufferSource();
         avatar.firstPersonWorldRender(e, bufferSource, stack, camera, tickDelta);
 
         // first person matrices
-        if (!Configs.FIRST_PERSON_MATRICES.value)
-            return;
+        if (Configs.FIRST_PERSON_MATRICES.value) {
+            Avatar.firstPerson = true;
 
-        Avatar.firstPerson = true;
+            int lastIndex = ((PoseStackAccessor)stack).getLastIndex();
+            stack.pushPose();
+            Vec3 offset = entityRenderer.getRenderOffset(state);
+            Vec3 cam = camera.getPosition();
+            stack.translate(
+                    Mth.lerp(tickDelta, livingEntity.xOld, livingEntity.getX()) - cam.x() + offset.x(),
+                    Mth.lerp(tickDelta, livingEntity.yOld, livingEntity.getY()) - cam.y() + offset.y(),
+                    Mth.lerp(tickDelta, livingEntity.zOld, livingEntity.getZ()) - cam.z() + offset.z()
+            );
 
-        int lastIndex = ((PoseStackAccessor)stack).getLastIndex();
-        stack.pushPose();
+            entityRenderer.submit(state, stack, this.submitNodeStorage, levelRenderState.cameraRenderState);
+            do {
+                stack.popPose();
+            } while(((PoseStackAccessor)stack).getLastIndex() > lastIndex);
+        }
 
-        Vec3 offset = entityRenderer.getRenderOffset(state);
-        Vec3 cam = camera.getPosition();
-
-        stack.translate(
-                Mth.lerp(tickDelta, livingEntity.xOld, livingEntity.getX()) - cam.x() + offset.x(),
-                Mth.lerp(tickDelta, livingEntity.yOld, livingEntity.getY()) - cam.y() + offset.y(),
-                Mth.lerp(tickDelta, livingEntity.zOld, livingEntity.getZ()) - cam.z() + offset.z()
-        );
-
-
-        entityRenderer.submit(state, stack, submitNodeStorage, levelRenderState.cameraRenderState);
-
-        do {
-            stack.popPose();
-        } while(((PoseStackAccessor)stack).getLastIndex() > lastIndex);
+        featureRenderDispatcher.renderAllFeatures();
+        bufferSource.endLastBatch(); // do a vanilla hand and render the hand/parts immediately
 
         Avatar.firstPerson = false;
     }
-
 
     @Inject(method =  {"method_62214"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderBuffers;bufferSource()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;"))
     public void applyFiguraNormals(GpuBufferSlice gpuBufferSlice, LevelRenderState levelRenderState, ProfilerFiller profiler, Matrix4f matrix4f, ResourceHandle resourceHandle, ResourceHandle resourceHandle2, boolean bl, Frustum frustum, ResourceHandle resourceHandle3, ResourceHandle resourceHandle4, CallbackInfo ci, @Local PoseStack poseStack) {

@@ -7,10 +7,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.LevelRenderState;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -33,6 +36,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Map;
+
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererMixin {
 
@@ -50,7 +55,9 @@ public abstract class LevelRendererMixin {
 
     @Inject(method = "submitEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;submit(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/client/renderer/state/CameraRenderState;DDDLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V"))
     private <S extends EntityRenderState> void renderEntity(PoseStack poseStack, LevelRenderState levelRenderState, SubmitNodeCollector submitNodeCollector, CallbackInfo ci, @Local S entityRenderState) {
-        Entity entity = Minecraft.getInstance().level.getEntity(((FiguraEntityRenderStateExtension)entityRenderState).figura$getEntityId());
+        Integer entityId = ((FiguraEntityRenderStateExtension)entityRenderState).figura$getEntityId();
+        if (entityId == null) return;
+        Entity entity = Minecraft.getInstance().level.getEntity(entityId);
         float tickDelta = ((FiguraEntityRenderStateExtension)entityRenderState).figura$getTickDelta();
 
         Avatar av = AvatarManager.getAvatar(entityRenderState);
