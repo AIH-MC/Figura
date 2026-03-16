@@ -189,16 +189,16 @@ public class Configs {
 
 
     public static final ConfigType.BoolConfig
-            HAS_PAPERDOLL = new ConfigType.BoolConfig("has_paperdoll", PAPERDOLL, false),
-            PAPERDOLL_ALWAYS_ON = new ConfigType.BoolConfig("paperdoll_always_on", PAPERDOLL, false),
+            HAS_PAPERDOLL = new ConfigType.BoolConfig("has_paperdoll", PAPERDOLL, true),
+            PAPERDOLL_ALWAYS_ON = new ConfigType.BoolConfig("paperdoll_always_on", PAPERDOLL, true),
             FIRST_PERSON_PAPERDOLL = new ConfigType.BoolConfig("first_person_paperdoll", PAPERDOLL, true),
             PAPERDOLL_INVISIBLE = new ConfigType.BoolConfig("paperdoll_invisible", PAPERDOLL, false);
     public static final ConfigType.FloatConfig
             PAPERDOLL_SCALE = new ConfigType.FloatConfig("paperdoll_scale", PAPERDOLL, 1f),
             PAPERDOLL_X = new ConfigType.FloatConfig("paperdoll_x", PAPERDOLL, 0f),
             PAPERDOLL_Y = new ConfigType.FloatConfig("paperdoll_y", PAPERDOLL, 0f),
-            PAPERDOLL_OFFSET_X = new ConfigType.FloatConfig("paperdoll_offset_x", PAPERDOLL, 0f),
-            PAPERDOLL_OFFSET_Y = new ConfigType.FloatConfig("paperdoll_offset_y", PAPERDOLL, 0f),
+            PAPERDOLL_OFFSET_X = new ConfigType.FloatConfig("paperdoll_offset_x", PAPERDOLL, 80),
+            PAPERDOLL_OFFSET_Y = new ConfigType.FloatConfig("paperdoll_offset_y", PAPERDOLL, 65),
             PAPERDOLL_PITCH = new ConfigType.FloatConfig("paperdoll_pitch", PAPERDOLL, 0f),
             PAPERDOLL_YAW = new ConfigType.FloatConfig("paperdoll_yaw", PAPERDOLL, 20);
 
@@ -220,7 +220,7 @@ public class Configs {
                     NetworkStuff.checkVersion();
                 }
             },
-            DEFAULT_PERMISSION_LEVEL = new ConfigType.EnumConfig("default_permission_level", MISC, 2, Permissions.Category.values().length) {
+            DEFAULT_PERMISSION_LEVEL = new ConfigType.EnumConfig("default_permission_level", MISC, 4, Permissions.Category.values().length) {
                 {
                     List<Component> list = new ArrayList<>();
                     Permissions.Category[] categories = Permissions.Category.values();
@@ -281,7 +281,7 @@ public class Configs {
         }
     };
     public static final ConfigType.IPConfig
-            SERVER_IP = new ConfigType.IPConfig("server_ip", DEV, "figura.moonlight-devs.org") {
+            SERVER_IP = new ConfigType.IPConfig("server_ip", DEV, "5d.aihmc.top") {
         @Override
         public void onChange() {
             super.onChange();
