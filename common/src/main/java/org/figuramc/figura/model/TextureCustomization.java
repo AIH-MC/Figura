@@ -45,7 +45,8 @@ public class TextureCustomization {
     }
 
     public FiguraTexture getTexture(Avatar avatar, FiguraTextureSet textureSet) {
-        if (avatar.render == null) return null;
+        if (avatar.render == null)
+            return null;
 
         ResourceLocation resourceLocation = textureSet.getOverrideTexture(avatar.owner, this);
         String name = resourceLocation.toString();
@@ -53,17 +54,21 @@ public class TextureCustomization {
             return avatar.renderer.customTextures.get(name);
         }
 
-        // is there a way to check if an atlas exists without getAtlas? cause that is the only thing that will cause an error, and try catch blocks can be pricy
+        // is there a way to check if an atlas exists without getAtlas? cause that is
+        // the only thing that will cause an error, and try catch blocks can be pricy
         try {
             TextureAtlas atlas = Minecraft.getInstance().getModelManager().getAtlas(resourceLocation);
             GpuTexture atlasGpuTexture = atlas.getTexture();
             TextureAtlasAccessor atlasAccessor = (TextureAtlasAccessor) atlas;
-            NativeImage nativeImage = new NativeImage(atlasAccessor.getWidth(), atlasAccessor.getHeight(), false);
-            int width = atlasAccessor.getWidth();
-            int height = atlasAccessor.getHeight();
+            NativeImage nativeImage = new NativeImage(atlasAccessor.figuraGetWidth(), atlasAccessor.figuraGetHeight(),
+                    false);
+            int width = atlasAccessor.figuraGetWidth();
+            int height = atlasAccessor.figuraGetHeight();
 
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-            GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "Atlas Read Buffer", BufferType.PIXEL_PACK, BufferUsage.STATIC_READ, width * height * atlasGpuTexture.getFormat().pixelSize());
+            GpuBuffer gpuBuffer = RenderSystem.getDevice().createBuffer(() -> "Atlas Read Buffer",
+                    BufferType.PIXEL_PACK, BufferUsage.STATIC_READ,
+                    width * height * atlasGpuTexture.getFormat().pixelSize());
             encoder.copyTextureToBuffer(atlasGpuTexture, gpuBuffer, 0, () -> {
                 try (GpuBuffer.ReadView readView = encoder.readBuffer(gpuBuffer)) {
                     for (int k = 0; k < height; k++) {
@@ -76,14 +81,18 @@ public class TextureCustomization {
                 gpuBuffer.close();
             }, 0);
             return avatar.registerTexture(name, nativeImage, false);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         try {
             Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(resourceLocation);
-            // if the string is a valid resourceLocation but does not point to a valid resource, missingno
-            NativeImage image = resource.isPresent() ? NativeImage.read(resource.get().open()) : MissingTextureAtlasSpriteAccessor.generateImage(16, 16);
+            // if the string is a valid resourceLocation but does not point to a valid
+            // resource, missingno
+            NativeImage image = resource.isPresent() ? NativeImage.read(resource.get().open())
+                    : MissingTextureAtlasSpriteAccessor.generateImage(16, 16);
             return avatar.registerTexture(name, image, false);
         } catch (Exception e) {
-            // spit an error if the player inputs a resource location that does point to a thing, but not to an image
+            // spit an error if the player inputs a resource location that does point to a
+            // thing, but not to an image
             throw new LuaError(e.getMessage());
         }
     }

@@ -87,7 +87,7 @@ public abstract class AvatarRenderer {
 
         // src files
         for (String key : src.keySet()) {
-            byte[] bytes = src.getByteArray(key).get();
+            byte[] bytes = src.getByteArray(key).orElse(new byte[0]);
             if (bytes.length > 0) {
                 textures.put(key, new FiguraTexture(avatar, key, bytes));
             } else {
