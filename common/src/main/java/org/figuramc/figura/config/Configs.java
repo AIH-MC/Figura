@@ -140,7 +140,7 @@ public class Configs {
             }};
     public static final ConfigType.BoolConfig
             ALLOW_FP_HANDS = new ConfigType.BoolConfig("allow_fp_hands", RENDERING, false),
-            FIRST_PERSON_MATRICES = new ConfigType.BoolConfig("first_person_matrices", RENDERING, true),
+            FIRST_PERSON_MATRICES = new ConfigType.BoolConfig("first_person_matrices", RENDERING, false),
             INVENTORY_SCISSOR = new ConfigType.BoolConfig("inventory_scissor", RENDERING, true),
             RENDER_STATS = new ConfigType.BoolConfig("render_stats", RENDERING, true, false);
 
@@ -188,7 +188,7 @@ public class Configs {
 
     public static final ConfigType.BoolConfig
             HAS_PAPERDOLL = new ConfigType.BoolConfig("has_paperdoll", PAPERDOLL, true),
-            PAPERDOLL_ALWAYS_ON = new ConfigType.BoolConfig("paperdoll_always_on", PAPERDOLL, false),
+            PAPERDOLL_ALWAYS_ON = new ConfigType.BoolConfig("paperdoll_always_on", PAPERDOLL, true),
             FIRST_PERSON_PAPERDOLL = new ConfigType.BoolConfig("first_person_paperdoll", PAPERDOLL, true),
             PAPERDOLL_INVISIBLE = new ConfigType.BoolConfig("paperdoll_invisible", PAPERDOLL, false);
     public static final ConfigType.FloatConfig
