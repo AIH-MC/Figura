@@ -6,7 +6,6 @@
   "mixins": [
   ],
   "client": [
-    "gui.PlayerHeadRenderInfoMixin",
     "AABBInvoker",
     "BiomeAccessor",
     "BlockBehaviourAccessor",
@@ -57,6 +56,7 @@
     "gui.GuiRendererMixin",
     "gui.InventoryScreenMixin",
     "gui.PauseScreenMixin",
+    "gui.PlayerHeadRenderInfoMixin",
     "gui.PlayerTabOverlayAccessor",
     "gui.PlayerTabOverlayMixin",
     "gui.ScreenAccessor",
@@ -105,6 +105,7 @@
     "render.layers.items.PlayerItemInHandLayerMixin",
     "render.model.ModelMixin",
     "render.model.ModelPartMixin",
+    "render.model.PartPoseMixin",
     "render.nodeRenderer.ItemDisplayContextMixin",
     "render.nodeRenderer.SubmitNodeCollectionMixin",
     "render.nodeRenderer.SubmitNodeStorage$FlameSubmitMixin",
