@@ -29,13 +29,14 @@ public class AuthHandler {
                 String username = user.getName();
                 String serverID = getServerID(username);
                 FiguraMod.debug("Joining \"{}\" on server \"{}\"", username, serverID);
-                //minecraft.getMinecraftSessionService().joinServer(user.getProfileId(), user.getAccessToken(), serverID);
+                minecraft.getMinecraftSessionService().joinServer(user.getProfileId(), user.getAccessToken(), serverID);
                 NetworkStuff.authSuccess(getToken(serverID));
             // cringe exceptions
             } catch (AuthenticationUnavailableException e) {
                 NetworkStuff.authFail(Component.translatable("disconnect.loginFailedInfo.serversUnavailable").getString());
             } catch (InvalidCredentialsException e) {
-                NetworkStuff.authFail(Component.translatable("disconnect.loginFailedInfo.invalidSession").getString());
+                FiguraMod.LOGGER.info("Mojang Authentication Failed, Using Offline Mode");
+                NetworkStuff.authSuccess("offline");
             } catch (InsufficientPrivilegesException e) {
                 NetworkStuff.authFail(Component.translatable("disconnect.loginFailedInfo.insufficientPrivileges").getString());
             } catch (UserBannedException e) {
