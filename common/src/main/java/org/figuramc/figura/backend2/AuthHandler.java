@@ -30,7 +30,7 @@ public class AuthHandler {
                 String serverID = getServerID(username);
                 FiguraMod.debug("Joining \"{}\" on server \"{}\"", username, serverID);
                 try{
-                    minecraft.getMinecraftSessionService().joinServer(user.getProfileId(), user.getAccessToken(), serverID);
+                    minecraft.getMinecraftSessionService().joinServer(user.getGameProfile(), user.getAccessToken(), serverID);
                 } catch (InvalidCredentialsException e) {
                     FiguraMod.LOGGER.info("Mojang Authentication Failed, Using Offline Mode");
                 } catch (AuthenticationUnavailableException e) {
