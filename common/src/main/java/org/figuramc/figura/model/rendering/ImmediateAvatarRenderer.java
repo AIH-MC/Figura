@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -339,13 +340,13 @@ public class ImmediateAvatarRenderer extends AvatarRenderer {
             boolean renderPivotParts = part.parentType.isPivot && allowPivotParts;
 
             if (renderPivot || renderTasks || renderPivotParts) {
+                // fix light and overlay
+                PartCustomization parent = customizationStack.peek();
+                int light = parent.light != null ? parent.light : LightTexture.FULL_BRIGHT;
+                int overlay = parent.overlay != null ? parent.overlay : OverlayTexture.NO_OVERLAY;
+
                 // fix pivots
                 FiguraMod.pushProfiler("fixMatricesPivot");
-
-                // Store calculated light level and current overlay effect before pushing pose stack
-                PartCustomization oldPeek = customizationStack.peek();
-                int light = oldPeek.light;
-                int overlay = oldPeek.overlay;
 
                 FiguraVec3 pivot = custom.getPivot().copy().add(custom.getOffsetPivot());
                 pivotOffsetter.setPos(pivot);
