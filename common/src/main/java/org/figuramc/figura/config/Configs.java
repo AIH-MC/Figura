@@ -189,7 +189,7 @@ public class Configs {
 
 
     public static final ConfigType.BoolConfig
-            HAS_PAPERDOLL = new ConfigType.BoolConfig("has_paperdoll", PAPERDOLL, true),
+            HAS_PAPERDOLL = new ConfigType.BoolConfig("has_paperdoll", PAPERDOLL, false),
             PAPERDOLL_ALWAYS_ON = new ConfigType.BoolConfig("paperdoll_always_on", PAPERDOLL, true),
             FIRST_PERSON_PAPERDOLL = new ConfigType.BoolConfig("first_person_paperdoll", PAPERDOLL, true),
             PAPERDOLL_INVISIBLE = new ConfigType.BoolConfig("paperdoll_invisible", PAPERDOLL, false);
