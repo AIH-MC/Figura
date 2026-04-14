@@ -8,9 +8,7 @@ import org.figuramc.figura.FiguraMod;
 import org.figuramc.figura.avatar.AvatarManager;
 import org.figuramc.figura.avatar.UserData;
 import org.figuramc.figura.gui.FiguraToast;
-import org.figuramc.figura.parsers.AvatarMetadataParser;
-import org.figuramc.figura.parsers.BlockbenchModelParser;
-import org.figuramc.figura.parsers.LuaScriptParser;
+import org.figuramc.figura.parsers.*;
 import org.figuramc.figura.utils.FiguraResourceListener;
 import org.figuramc.figura.utils.FiguraText;
 import org.figuramc.figura.utils.IOUtils;
@@ -113,6 +111,7 @@ public class LocalAvatarLoader {
         Path finalPath = path;
         async(() -> {
             try {
+                FiguraMod.debug("--- avatar compiling: " + target.id + " ---");
                 // load as folder
                 CompoundTag nbt = new CompoundTag();
 
@@ -127,7 +126,7 @@ public class LocalAvatarLoader {
                 // models
                 CompoundTag textures = new CompoundTag();
                 ListTag animations = new ListTag();
-                BlockbenchModelParser modelParser = new BlockbenchModelParser();
+                BlockbenchParser2 modelParser = new BlockbenchParser2();
 
                 loadState = LoadState.MODELS;
                 CompoundTag models = loadModels(finalPath, finalPath, modelParser, textures, animations, "");
@@ -257,7 +256,7 @@ public class LocalAvatarLoader {
         }
     }
 
-    private static CompoundTag loadModels(Path avatarFolder, Path currentFile, BlockbenchModelParser parser, CompoundTag textures, ListTag animations, String folders) throws Exception {
+    private static CompoundTag loadModels(Path avatarFolder, Path currentFile, BlockbenchParser2 parser, CompoundTag textures, ListTag animations, String folders) throws Exception {
         CompoundTag result = new CompoundTag();
         List<Path> subFiles = IOUtils.listPaths(currentFile);
         ListTag children = new ListTag();
@@ -270,12 +269,11 @@ public class LocalAvatarLoader {
                     CompoundTag subfolder = loadModels(avatarFolder, file, parser, textures, animations, folders + name + ".");
                     if (!subfolder.isEmpty()) {
                         subfolder.putString("name", name);
-                        BlockbenchModelParser.parseParent(name, subfolder);
+                        BlockbenchCommonTypes.parseParent(name, subfolder);
                         children.add(subfolder);
                     }
                 } else if (file.toString().toLowerCase(Locale.US).endsWith(".bbmodel")) {
-                    BlockbenchModelParser.ModelData data = parser.parseModel(avatarFolder, file, IOUtils.readFile(file), name.substring(0, name.length() - 8), folders);
-                    children.add(data.modelNbt());
+                    ModelParseResult data = parser.parseModel(avatarFolder, file, IOUtils.readFile(file), name.substring(0, name.length() - 8), folders);
                     animations.addAll(data.animationList());
 
                     CompoundTag dataTag = data.textures();
