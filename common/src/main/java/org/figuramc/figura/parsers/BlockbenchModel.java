@@ -7,6 +7,7 @@ import java.util.List;
 
 // dummy class for gson reflection
 // allows reading the model json way easier
+@Deprecated
 public class BlockbenchModel {
     Meta meta;
     Resolution resolution;
